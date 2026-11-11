@@ -1,184 +1,140 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>APM ATOMY｜商品查詢中心</title>
+<title>APM ATOMY｜商品資訊中心</title>
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,"Noto Sans TC",sans-serif;
-  background:#f7f8f6;
-  color:#26332d;
-}
-header{
-  background:#fff;
-  padding:24px 20px;
-  border-bottom:1px solid #e7ebe7;
-  text-align:center;
-}
-.logo{font-size:29px;font-weight:800;letter-spacing:3px}
-.sub{font-size:11px;letter-spacing:2px;color:#829087;margin-top:7px}
-main{max-width:1050px;margin:35px auto;padding:0 18px}
-h1{font-size:25px;text-align:center;margin-bottom:10px}
-.intro{text-align:center;color:#78847d;font-size:14px;margin-bottom:28px}
-.search{
-  display:flex;
-  max-width:650px;
-  margin:0 auto 25px;
-}
-.search input{
-  flex:1;min-width:0;padding:15px;
-  border:1px solid #dce3dc;border-radius:9px;
-  font-size:15px;outline:none;
-}
-.categories{
-  display:flex;justify-content:center;
-  flex-wrap:wrap;gap:9px;margin-bottom:30px;
-}
-.categories button{
-  border:1px solid #dce3dc;background:white;
-  border-radius:20px;padding:9px 17px;
-  cursor:pointer;color:#526057;
-}
-.categories button.active{
-  background:#315d48;color:white;border-color:#315d48;
-}
-.products{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-  gap:18px;
-}
-.card{
-  background:white;border:1px solid #e8ece8;
-  border-radius:12px;overflow:hidden;
-}
-.photo{
-  height:155px;background:#eef2ed;
-  display:flex;align-items:center;
-  justify-content:center;color:#9aa69d;
-  font-size:13px;
-}
-.info{padding:16px}
-.code{font-size:11px;color:#849188}
-.name{font-size:16px;font-weight:700;margin:9px 0}
-.desc{font-size:13px;color:#78847d;line-height:1.6}
-.price{font-size:19px;font-weight:700;color:#315d48;margin-top:12px}
-.empty{text-align:center;color:#87928a;padding:50px 10px;grid-column:1/-1}
-footer{text-align:center;padding:35px 15px;color:#9aa49d;font-size:12px}
+body{margin:0;background:#f7f7f5;color:#292929;font-family:Arial,"Noto Sans TC",sans-serif}
+header{background:#202b27;color:white;padding:35px 20px;text-align:center}
+header h1{letter-spacing:4px;margin:0;font-size:28px}
+header p{color:#d6dfd9;font-size:13px;letter-spacing:2px}
+main{max-width:1000px;margin:30px auto;padding:0 16px}
+.search{width:100%;padding:15px;border:1px solid #ddd;border-radius:10px;font-size:16px;background:white}
+.categories{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.categories button{border:1px solid #ccc;background:white;padding:9px 16px;border-radius:20px;cursor:pointer}
+.categories button.active{background:#263a31;color:white;border-color:#263a31}
+.status{color:#777;font-size:14px;margin:18px 0}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+.card{background:white;border-radius:12px;overflow:hidden;border:1px solid #eee}
+.card img{width:100%;height:210px;object-fit:contain;background:#fafafa}
+.info{padding:15px}
+.code{color:#888;font-size:12px}
+.info h3{font-size:17px;margin:8px 0}
+.spec{font-size:13px;color:#777;line-height:1.6}
+.price{font-size:19px;font-weight:bold;color:#8b6542;margin-top:12px}
+.empty{text-align:center;color:#888;padding:50px 10px;grid-column:1/-1}
+footer{text-align:center;padding:35px;color:#999;font-size:12px}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">APM ATOMY</div>
-  <div class="sub">PRODUCT INFORMATION CENTER</div>
+<h1>APM ATOMY</h1>
+<p>PRODUCT INFORMATION CENTER</p>
 </header>
-
 <main>
-  <h1>艾多美商品查詢中心</h1>
-  <div class="intro">快速搜尋商品名稱、商品編號及商品資訊</div>
-
-  <div class="search">
-    <input id="search" placeholder="輸入商品名稱或商品編號..." />
-  </div>
-
-  <div class="categories" id="categories">
-    <button class="active" data-category="全部">全部商品</button>
-    <button data-category="保養品">保養品</button>
-    <button data-category="食品">食品</button>
-    <button data-category="生活用品">生活用品</button>
-    <button data-category="其他">其他</button>
-  </div>
-
-  <div class="products" id="products"></div>
+<input id="search" class="search" placeholder="搜尋商品名稱或商品編號...">
+<div id="categories" class="categories"></div>
+<div id="status" class="status">正在載入商品資料...</div>
+<div id="products" class="products"></div>
 </main>
-
-<footer>
-  APM ATOMY · PRODUCT INFORMATION CENTER
-</footer>
+<footer>APM ATOMY｜商品資訊中心</footer>
 
 <script>
-const products = [
-  {
-    code:"DEMO001",
-    name:"商品範例一",
-    category:"保養品",
-    description:"這裡可以放商品介紹與規格。",
-    price:"請洽詢"
-  },
-  {
-    code:"DEMO002",
-    name:"商品範例二",
-    category:"食品",
-    description:"這裡可以放商品介紹與規格。",
-    price:"請洽詢"
-  },
-  {
-    code:"DEMO003",
-    name:"商品範例三",
-    category:"生活用品",
-    description:"這裡可以放商品介紹與規格。",
-    price:"請洽詢"
-  }
-];
+const SUPABASE_URL = "https://zqmeuxexdyedkavddwcq.supabase.co";
+const SUPABASE_KEY = "sb_publishable_jiyJMcqNiFY_6-WynwYgDg_jQAnnnn2";
 
+let allProducts = [];
 let selectedCategory = "全部";
 
-function renderProducts(){
-  const keyword = document.getElementById("search")
-    .value.trim().toLowerCase();
+async function loadProducts(){
+  const status = document.getElementById("status");
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc",
+      {
+        headers:{
+          "apikey":SUPABASE_KEY,
+          "Authorization":"Bearer " + SUPABASE_KEY
+        }
+      }
+    );
 
-  const filtered = products.filter(item => {
-    const matchKeyword =
-      item.name.toLowerCase().includes(keyword) ||
-      item.code.toLowerCase().includes(keyword);
+    if(!response.ok){
+      throw new Error("資料讀取失敗：" + response.status);
+    }
 
-    const matchCategory =
-      selectedCategory === "全部" ||
-      item.category === selectedCategory;
-
-    return matchKeyword && matchCategory;
-  });
-
-  const container = document.getElementById("products");
-
-  if(filtered.length === 0){
-    container.innerHTML =
-      '<div class="empty">找不到符合的商品，請試試其他關鍵字。</div>';
-    return;
+    allProducts = await response.json();
+    renderCategories();
+    renderProducts();
+  } catch(error) {
+    status.textContent = "商品資料載入失敗，請確認資料庫設定。";
+    console.error(error);
   }
-
-  container.innerHTML = filtered.map(item => `
-    <div class="card">
-      <div class="photo">商品圖片位置</div>
-      <div class="info">
-        <div class="code">商品編號：${item.code}</div>
-        <div class="name">${item.name}</div>
-        <div class="desc">${item.category}<br>${item.description}</div>
-        <div class="price">${item.price}</div>
-      </div>
-    </div>
-  `).join("");
 }
 
-document.getElementById("search")
-  .addEventListener("input",renderProducts);
+function renderCategories(){
+  const categories = ["全部",...new Set(
+    allProducts.map(p=>p.category).filter(Boolean)
+  )];
 
-document.querySelectorAll(".categories button")
-  .forEach(button => {
-    button.addEventListener("click",() => {
-      document.querySelectorAll(".categories button")
-        .forEach(b => b.classList.remove("active"));
+  document.getElementById("categories").innerHTML =
+    categories.map(c=>`
+      <button class="${c===selectedCategory?'active':''}"
+      onclick="selectCategory(${JSON.stringify(c)})">${escapeHTML(c)}</button>
+    `).join("");
+}
 
-      button.classList.add("active");
-      selectedCategory = button.dataset.category;
-      renderProducts();
-    });
+function selectCategory(category){
+  selectedCategory = category;
+  renderCategories();
+  renderProducts();
+}
+
+function renderProducts(){
+  const keyword = document.getElementById("search").value.trim().toLowerCase();
+
+  const filtered = allProducts.filter(p=>{
+    const matchesCategory = selectedCategory==="全部" || p.category===selectedCategory;
+    const matchesKeyword =
+      (p.name||"").toLowerCase().includes(keyword) ||
+      (p.product_code||"").toLowerCase().includes(keyword);
+    return matchesCategory && matchesKeyword;
   });
 
-renderProducts();
+  document.getElementById("status").textContent =
+    "共找到 " + filtered.length + " 項商品";
+
+  document.getElementById("products").innerHTML =
+    filtered.length ? filtered.map(p=>`
+      <article class="card">
+        ${p.image_url
+          ? `<img src="${escapeHTML(p.image_url)}" alt="${escapeHTML(p.name)}" loading="lazy">`
+          : `<div style="height:210px;display:grid;place-items:center;color:#aaa;background:#fafafa">商品圖片</div>`
+        }
+        <div class="info">
+          <div class="code">${escapeHTML(p.product_code||"")}</div>
+          <h3>${escapeHTML(p.name)}</h3>
+          <div class="spec">${escapeHTML(p.spec||"")}</div>
+          <div class="spec">${escapeHTML(p.description||"")}</div>
+          ${p.price!==null && p.price!==undefined
+            ? `<div class="price">NT$ ${Number(p.price).toLocaleString("zh-TW")}</div>`
+            : ""}
+        </div>
+      </article>
+    `).join("")
+    : `<div class="empty">目前沒有找到符合的商品</div>`;
+}
+
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g,char=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[char]));
+}
+
+document.getElementById("search").addEventListener("input",renderProducts);
+loadProducts();
 </script>
 </body>
 </html>
