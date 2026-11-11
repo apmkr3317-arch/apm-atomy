@@ -34,6 +34,19 @@ footer{text-align:center;padding:35px;color:#999;font-size:12px}
 <p>PRODUCT INFORMATION CENTER</p>
 </header>
 <main>
+  <div id="admin-login">
+  <h3>管理員登入</h3>
+  <input id="admin-email" type="email" placeholder="管理員 Email">
+  <input id="admin-password" type="password" placeholder="管理員密碼">
+  <button onclick="adminLogin()">登入</button>
+  <p id="admin-message"></p>
+</div>
+
+<div id="admin-panel" style="display:none;">
+  <h3>商品管理</h3>
+  <p>管理員已登入</p>
+  <button onclick="adminLogout()">登出</button>
+</div>
 <input id="search" class="search" placeholder="搜尋商品名稱或商品編號...">
 <div id="categories" class="categories"></div>
 <div id="status" class="status">正在載入商品資料...</div>
@@ -41,13 +54,57 @@ footer{text-align:center;padding:35px;color:#999;font-size:12px}
 </main>
 <footer>APM ATOMY｜商品資訊中心</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ 
 <script>
 const SUPABASE_URL = "https://zqmeuxexdyedkavddwcq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_jiyJMcqNiFY_6-WynwYgDg_jQAnnnn2";
 
+ const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const ADMIN_UID = "fca371d8-931f-48af-8478-bea4a4cc14c7";
+
 let allProducts = [];
 let selectedCategory = "全部";
 
+  async function adminLogin(){
+  const email = document.getElementById("admin-email").value.trim();
+  const password = document.getElementById("admin-password").value;
+  const message = document.getElementById("admin-message");
+
+  message.textContent = "正在登入...";
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if(error){
+    message.textContent = "登入失敗，請確認帳號及密碼。";
+    return;
+  }
+
+  if(data.user.id !== ADMIN_UID){
+    await supabase.auth.signOut();
+    message.textContent = "此帳號沒有管理員權限。";
+    return;
+  }
+
+  document.getElementById("admin-login").style.display = "none";
+  document.getElementById("admin-panel").style.display = "block";
+  message.textContent = "";
+}
+
+async function adminLogout(){
+  await supabase.auth.signOut();
+  document.getElementById("admin-login").style.display = "block";
+  document.getElementById("admin-panel").style.display = "none";
+  document.getElementById("admin-password").value = "";
+}
+  
 async function loadProducts(){
   const status = document.getElementById("status");
   try {
