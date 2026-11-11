@@ -43,7 +43,26 @@ footer{text-align:center;padding:35px;color:#999;font-size:12px}
 </div>
 
 <div id="admin-panel" style="display:none;">
-  <h3>商品管理</h3>
+ <input id="product-code" placeholder="商品編號">
+<input id="product-name" placeholder="商品名稱">
+
+<select id="product-category">
+  <option value="保養品">保養品</option>
+  <option value="食品">食品</option>
+  <option value="生活用品">生活用品</option>
+  <option value="其他">其他</option>
+</select>
+
+<input id="product-price" type="number" placeholder="商品價格">
+<input id="product-spec" placeholder="商品規格">
+<input id="product-image" placeholder="商品圖片網址">
+
+<textarea id="product-description" placeholder="商品介紹"></textarea>
+
+<button onclick="saveProduct()">儲存商品</button>
+<button onclick="clearProductForm()">清空表單</button>
+
+<p id="product-message"></p>
   <p>管理員已登入</p>
   <button onclick="adminLogout()">登出</button>
 </div>
@@ -69,7 +88,8 @@ const ADMIN_UID = "fca371d8-931f-48af-8478-bea4a4cc14c7";
 
 let allProducts = [];
 let selectedCategory = "全部";
-
+let isAdmin = false;
+  
   async function adminLogin(){
   const email = document.getElementById("admin-email").value.trim();
   const password = document.getElementById("admin-password").value;
@@ -93,16 +113,76 @@ let selectedCategory = "全部";
     return;
   }
 
+  isAdmin = true;
   document.getElementById("admin-login").style.display = "none";
   document.getElementById("admin-panel").style.display = "block";
   message.textContent = "";
+  renderProducts(); 
 }
 
 async function adminLogout(){
   await supabaseClient.auth.signOut();
+  isAdmin = false;
   document.getElementById("admin-login").style.display = "block";
   document.getElementById("admin-panel").style.display = "none";
   document.getElementById("admin-password").value = "";
+}
+let editingProductId = null;
+
+async function saveProduct(){
+  const message = document.getElementById("product-message");
+
+  const product = {
+    product_code: document.getElementById("product-code").value.trim(),
+    name: document.getElementById("product-name").value.trim(),
+    category: document.getElementById("product-category").value,
+    price: Number(document.getElementById("product-price").value) || null,
+    spec: document.getElementById("product-spec").value.trim(),
+    image_url: document.getElementById("product-image").value.trim(),
+    description: document.getElementById("product-description").value.trim(),
+    is_active: true
+  };
+
+  if(!product.product_code || !product.name){
+    message.textContent = "請填寫商品編號及商品名稱。";
+    return;
+  }
+
+  message.textContent = "正在儲存...";
+
+  let result;
+
+  if(editingProductId){
+    result = await supabaseClient
+      .from("products")
+      .update(product)
+      .eq("id", editingProductId);
+  }else{
+    result = await supabaseClient
+      .from("products")
+      .insert([product]);
+  }
+
+  if(result.error){
+    message.textContent = "儲存失敗：" + result.error.message;
+    return;
+  }
+
+  message.textContent = "商品儲存成功！";
+  clearProductForm();
+  await loadProducts();
+}
+function clearProductForm(){
+  editingProductId = null;
+
+  document.getElementById("product-code").value = "";
+  document.getElementById("product-name").value = "";
+  document.getElementById("product-category").value = "保養品";
+  document.getElementById("product-price").value = "";
+  document.getElementById("product-spec").value = "";
+  document.getElementById("product-image").value = "";
+  document.getElementById("product-description").value = "";
+  document.getElementById("product-message").textContent = "";
 }
   
 async function loadProducts(){
@@ -131,6 +211,52 @@ async function loadProducts(){
   }
 }
 
+function editProduct(id){
+  const product = allProducts.find(p => p.id === id);
+
+  if(!product) return;
+
+  editingProductId = product.id;
+
+  document.getElementById("product-code").value = product.product_code || "";
+  document.getElementById("product-name").value = product.name || "";
+  document.getElementById("product-category").value = product.category || "保養品";
+  document.getElementById("product-price").value = product.price ?? "";
+  document.getElementById("product-spec").value = product.spec || "";
+  document.getElementById("product-image").value = product.image_url || "";
+  document.getElementById("product-description").value = product.description || "";
+
+  document.getElementById("product-message").textContent = "正在修改：" + product.name;
+
+  document.getElementById("admin-panel").scrollIntoView({
+    behavior: "smooth"
+  });
+}
+
+async function deleteProduct(id){
+  const product = allProducts.find(p => p.id === id);
+
+  if(!product) return;
+
+  const confirmed = confirm(
+    "確定要刪除商品「" + product.name + "」嗎？"
+  );
+
+  if(!confirmed) return;
+
+  const { error } = await supabaseClient
+    .from("products")
+    .delete()
+    .eq("id", id);
+
+  if(error){
+    alert("刪除失敗：" + error.message);
+    return;
+  }
+
+  alert("商品已刪除！");
+  await loadProducts();
+}
 function renderCategories(){
   const categories = ["全部",...new Set(
     allProducts.map(p=>p.category).filter(Boolean)
@@ -178,6 +304,10 @@ function renderProducts(){
           ${p.price!==null && p.price!==undefined
             ? `<div class="price">NT$ ${Number(p.price).toLocaleString("zh-TW")}</div>`
             : ""}
+            ${isAdmin ? `
+  <button onclick="editProduct('${p.id}')">修改商品</button>
+  <button onclick="deleteProduct('${p.id}')">刪除商品</button>
+` : ""}
         </div>
       </article>
     `).join("")
