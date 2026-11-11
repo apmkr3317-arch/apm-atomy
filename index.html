@@ -60,7 +60,7 @@ footer{text-align:center;padding:35px;color:#999;font-size:12px}
 const SUPABASE_URL = "https://zqmeuxexdyedkavddwcq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_jiyJMcqNiFY_6-WynwYgDg_jQAnnnn2";
 
- const supabase = window.supabase.createClient(
+ const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
@@ -77,7 +77,7 @@ let selectedCategory = "全部";
 
   message.textContent = "正在登入...";
 
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
     email: email,
     password: password
   });
@@ -88,7 +88,7 @@ let selectedCategory = "全部";
   }
 
   if(data.user.id !== ADMIN_UID){
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     message.textContent = "此帳號沒有管理員權限。";
     return;
   }
@@ -99,7 +99,7 @@ let selectedCategory = "全部";
 }
 
 async function adminLogout(){
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   document.getElementById("admin-login").style.display = "block";
   document.getElementById("admin-panel").style.display = "none";
   document.getElementById("admin-password").value = "";
