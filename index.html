@@ -76,6 +76,23 @@ footer{text-align:center;padding:35px;color:#999;font-size:12px}
 <div id="categories" class="categories"></div>
 <div id="status" class="status">正在載入商品資料...</div>
 <div id="products" class="products"></div>
+  
+<section id="shopping-cart" style="margin-top:35px;padding:20px;background:white;border-radius:12px;border:1px solid #eee;">
+  <h2>🛒 我的購物車</h2>
+
+  <div id="cart-items">
+    <p>目前尚未選購商品</p>
+  </div>
+
+  <div style="margin-top:20px;border-top:1px solid #eee;padding-top:15px;">
+    <h3>訂單總金額：NT$ <span id="cart-total">0</span></h3>
+  </div>
+
+  <button onclick="copyOrder()">
+    複製訂單明細
+  </button>
+</section>
+
 </main>
 <footer>APM ATOMY｜商品資訊中心</footer>
 
@@ -95,6 +112,7 @@ const ADMIN_UID = "fca371d8-931f-48af-8478-bea4a4cc14c7";
 let allProducts = [];
 let selectedCategory = "全部";
 let isAdmin = false;
+let cart = [];
   
   async function adminLogin(){
   const email = document.getElementById("admin-email").value.trim();
