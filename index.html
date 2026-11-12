@@ -55,7 +55,8 @@ footer{text-align:center;padding:35px;color:#999;font-size:12px}
 
 <input id="product-price" type="number" placeholder="商品價格">
 <input id="product-spec" placeholder="商品規格">
-<input id="product-image" placeholder="商品圖片網址">
+<input id="product-image" type="file" accept="image/*">
+<img id="image-preview" style="display:none;width:150px;margin-top:10px;">
 
 <textarea id="product-description" placeholder="商品介紹"></textarea>
 
@@ -129,6 +130,19 @@ async function adminLogout(){
 }
 let editingProductId = null;
 
+  document.getElementById("product-image").addEventListener("change", function(){
+  const file = this.files[0];
+  const preview = document.getElementById("image-preview");
+
+  if(file){
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+  }else{
+    preview.src = "";
+    preview.style.display = "none";
+  }
+});
+
 async function saveProduct(){
   const message = document.getElementById("product-message");
 
@@ -138,7 +152,7 @@ async function saveProduct(){
     category: document.getElementById("product-category").value,
     price: Number(document.getElementById("product-price").value) || null,
     spec: document.getElementById("product-spec").value.trim(),
-    image_url: document.getElementById("product-image").value.trim(),
+    image_url: "",
     description: document.getElementById("product-description").value.trim(),
     is_active: true
   };
@@ -149,6 +163,46 @@ async function saveProduct(){
   }
 
   message.textContent = "正在儲存...";
+
+    const imageFile = document.getElementById("product-image").files[0];
+
+    if(imageFile && !imageFile.type.startsWith("image/")){
+    message.textContent = "請選擇圖片檔案。";
+    return;
+  }
+
+  if(imageFile && imageFile.size > 5 * 1024 * 1024){
+    message.textContent = "圖片大小不能超過 5MB。";
+    return;
+  }
+  
+if(editingProductId){
+    const oldProduct = allProducts.find(p => p.id === editingProductId);
+    product.image_url = oldProduct ? oldProduct.image_url || "" : "";
+  }
+  
+  if(imageFile){
+    const fileExt = imageFile.name.split(".").pop();
+    const fileName = product.product_code + "_" + Date.now() + "." + fileExt;
+
+    message.textContent = "正在上傳商品圖片...";
+
+    const { data: uploadData, error: uploadError } =
+      await supabaseClient.storage
+        .from("product-images")
+        .upload(fileName, imageFile);
+
+    if(uploadError){
+      message.textContent = "圖片上傳失敗：" + uploadError.message;
+      return;
+    }
+
+    const { data: urlData } = supabaseClient.storage
+      .from("product-images")
+      .getPublicUrl(fileName);
+
+    product.image_url = urlData.publicUrl;
+  }
 
   let result;
 
@@ -181,6 +235,8 @@ function clearProductForm(){
   document.getElementById("product-price").value = "";
   document.getElementById("product-spec").value = "";
   document.getElementById("product-image").value = "";
+  document.getElementById("image-preview").src = "";
+  document.getElementById("image-preview").style.display = "none";
   document.getElementById("product-description").value = "";
   document.getElementById("product-message").textContent = "";
 }
@@ -223,7 +279,9 @@ function editProduct(id){
   document.getElementById("product-category").value = product.category || "保養品";
   document.getElementById("product-price").value = product.price ?? "";
   document.getElementById("product-spec").value = product.spec || "";
-  document.getElementById("product-image").value = product.image_url || "";
+  document.getElementById("image-preview").src = product.image_url || "";
+  document.getElementById("image-preview").style.display =
+  product.image_url ? "block" : "none";
   document.getElementById("product-description").value = product.description || "";
 
   document.getElementById("product-message").textContent = "正在修改：" + product.name;
