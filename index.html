@@ -290,8 +290,6 @@ async function loadProducts(){
     status.textContent = "商品資料載入失敗，請確認資料庫設定。";
     console.error(error);
   }
-}
-
 function editProduct(id){
   const product = allProducts.find(p => p.id === id);
 
