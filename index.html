@@ -236,7 +236,7 @@ function clearProductForm(){
 
   document.getElementById("product-code").value = "";
   document.getElementById("product-name").value = "";
-  document.getElementById("product-category").value = "保養品";
+  document.getElementById("product-category").value = "韓國特惠";
   document.getElementById("product-price").value = "";
   document.getElementById("product-spec").value = "";
   document.getElementById("product-image").value = "";
@@ -281,7 +281,7 @@ function editProduct(id){
 
   document.getElementById("product-code").value = product.product_code || "";
   document.getElementById("product-name").value = product.name || "";
-  document.getElementById("product-category").value = product.category || "保養品";
+  document.getElementById("product-category").value = product.category || "韓國特惠";
   document.getElementById("product-price").value = product.price ?? "";
   document.getElementById("product-spec").value = product.spec || "";
   document.getElementById("image-preview").src = product.image_url || "";
@@ -321,9 +321,18 @@ async function deleteProduct(id){
   await loadProducts();
 }
 function renderCategories(){
-  const categories = ["全部",...new Set(
-    allProducts.map(p=>p.category).filter(Boolean)
-  )];
+  const categories = [
+    "全部",
+    "韓國特惠",
+    "日本特惠",
+    "韓國保健食品",
+    "韓國保養品",
+    "韓國食品",
+    "韓國生活用品",
+    "日本保健食品",
+    "紐西蘭保健食品",
+    "馬來西亞保健食品"
+  ];
 
   document.getElementById("categories").innerHTML =
     categories.map(c=>`
