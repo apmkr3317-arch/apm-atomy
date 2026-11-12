@@ -337,7 +337,7 @@ function renderCategories(){
   document.getElementById("categories").innerHTML =
     categories.map(c=>`
       <button class="${c===selectedCategory?'active':''}"
-      onclick="selectCategory(${JSON.stringify(c)})">${escapeHTML(c)}</button>
+      onclick='selectCategory(${JSON.stringify(c)})'>${escapeHTML(c)}</button>
     `).join("");
 }
 
