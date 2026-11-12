@@ -478,6 +478,16 @@ function addToCart(id){
     alert("複製失敗，請確認網站是否使用 HTTPS。");
   }
 }
+  function selectCategory(category){
+  if(selectedCategory === category){
+    selectedCategory = "全部";
+  }else{
+    selectedCategory = category;
+  }
+
+  renderCategories();
+  renderProducts();
+}
 function renderCategories(){
   const allCategories = [
     "韓國特惠",
@@ -580,7 +590,6 @@ function enableProductDrag(){
   });
 }
   
-}
 function renderProducts(){
   const keyword = document.getElementById("search").value.trim().toLowerCase();
 
