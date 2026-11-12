@@ -376,7 +376,106 @@ async function moveProduct(id, direction){
 
   await loadProducts();
 }
+function addToCart(id){
+  const product = allProducts.find(p => p.id === id);
 
+  if(!product) return;
+
+  const existing = cart.find(item => item.id === id);
+
+  if(existing){
+    existing.quantity += 1;
+  }else{
+    cart.push({
+      id: product.id,
+      product_code: product.product_code || "",
+      name: product.name,
+      price: Number(product.price),
+      quantity: 1
+    });
+  }
+
+  renderCart();
+}
+  function renderCart(){
+  const container = document.getElementById("cart-items");
+  const totalElement = document.getElementById("cart-total");
+
+  if(cart.length === 0){
+    container.innerHTML = "<p>目前尚未選購商品</p>";
+    totalElement.textContent = "0";
+    return;
+  }
+
+  container.innerHTML = cart.map(item => `
+    <div style="padding:12px 0;border-bottom:1px solid #eee;">
+      <strong>${escapeHTML(item.name)}</strong>
+      <div>商品編號：${escapeHTML(item.product_code)}</div>
+      <div>單價：NT$ ${item.price.toLocaleString("zh-TW")}</div>
+
+      <button onclick="changeCartQuantity('${item.id}', -1)">－</button>
+      <span>${item.quantity}</span>
+      <button onclick="changeCartQuantity('${item.id}', 1)">＋</button>
+      <button onclick="removeFromCart('${item.id}')">移除</button>
+
+      <div>小計：NT$ ${(item.price * item.quantity).toLocaleString("zh-TW")}</div>
+    </div>
+  `).join("");
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity, 0
+  );
+
+  totalElement.textContent = total.toLocaleString("zh-TW");
+}
+  function changeCartQuantity(id, change){
+  const item = cart.find(item => item.id === id);
+
+  if(!item) return;
+
+  item.quantity += change;
+
+  if(item.quantity <= 0){
+    cart = cart.filter(item => item.id !== id);
+  }
+
+  renderCart();
+}
+  function removeFromCart(id){
+  cart = cart.filter(item => item.id !== id);
+  renderCart();
+}
+  async function copyOrder(){
+  if(cart.length === 0){
+    alert("購物車目前沒有商品。");
+    return;
+  }
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity, 0
+  );
+
+  const lines = [
+    "APM ATOMY 商品訂單",
+    "--------------------",
+    ...cart.map(item =>
+      `${item.name}（${item.product_code}）× ${item.quantity} = NT$ ${(item.price * item.quantity).toLocaleString("zh-TW")}`
+    ),
+    "--------------------",
+    `訂單總金額：NT$ ${total.toLocaleString("zh-TW")}`,
+    "",
+    "請客服協助確認訂單，謝謝！"
+  ];
+
+  const orderText = lines.join("\n");
+
+  try{
+    await navigator.clipboard.writeText(orderText);
+    alert("訂單明細已複製，請貼給客服。");
+  }catch(error){
+    alert("複製失敗，請確認網站是否使用 HTTPS。");
+  }
+}
 function renderCategories(){
   const allCategories = [
     "韓國特惠",
@@ -385,7 +484,7 @@ function renderCategories(){
     "韓國保養品",
     "韓國食品",
     "韓國生活用品",
-    "AZA商品"
+    "AZA商品",
     "日本保健食品",
     "紐西蘭保健食品",
     "馬來西亞保健食品"
@@ -440,6 +539,11 @@ function renderProducts(){
           ${p.price!==null && p.price!==undefined
             ? `<div class="price">NT$ ${Number(p.price).toLocaleString("zh-TW")}</div>`
             : ""}
+           ${!isAdmin && p.price !== null && p.price !== undefined ? `
+  <button onclick="addToCart('${p.id}')">
+    加入購物車
+  </button>
+` : ""}
             ${isAdmin ? `
  <button onclick="moveProduct('${p.id}', -1)">↑</button>
 <button onclick="moveProduct('${p.id}', 1)">↓</button>
