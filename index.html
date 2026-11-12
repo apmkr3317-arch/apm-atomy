@@ -97,7 +97,9 @@ footer{text-align:center;padding:35px;color:#999;font-size:12px}
 <footer>APM ATOMY｜商品資訊中心</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- 
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script> 
+  
 <script>
 const SUPABASE_URL = "https://zqmeuxexdyedkavddwcq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_jiyJMcqNiFY_6-WynwYgDg_jQAnnnn2";
@@ -500,15 +502,84 @@ function renderCategories(){
       onclick='selectCategory(${JSON.stringify(c)})'>${escapeHTML(c)}</button>
     `).join("");
 }
-function selectCategory(category){
-  if(selectedCategory === category){
-    selectedCategory = "全部";
-  }else{
-    selectedCategory = category;
+let productSortable = null;
+
+function enableProductDrag(){
+  const container = document.getElementById("products");
+
+  if(!isAdmin){
+    if(productSortable){
+      productSortable.destroy();
+      productSortable = null;
+    }
+    return;
   }
 
-  renderCategories();
-  renderProducts();
+  if(productSortable){
+    productSortable.destroy();
+  }
+
+  productSortable = new Sortable(container, {
+    animation: 150,
+    handle: ".drag-handle",
+    draggable: ".card",
+
+    onEnd: async function(){
+
+      const keyword = document.getElementById("search").value.trim();
+
+      if(keyword){
+        alert("請先清除搜尋文字，再進行商品排序。");
+        await loadProducts();
+        return;
+      }
+
+      const cards = [...container.querySelectorAll(".card")];
+
+      const draggedIds = cards.map(card => card.dataset.id);
+
+      const reorderedCategory = draggedIds.map(id =>
+        allProducts.find(p => p.id === id)
+      );
+
+      if(reorderedCategory.some(p => !p)){
+        await loadProducts();
+        return;
+      }
+
+      let reorderedAll;
+
+      if(selectedCategory === "全部"){
+        reorderedAll = reorderedCategory;
+      }else{
+        let index = 0;
+
+        reorderedAll = allProducts.map(p =>
+          p.category === selectedCategory
+            ? reorderedCategory[index++]
+            : p
+        );
+      }
+
+      for(let i = 0; i < reorderedAll.length; i++){
+
+        const { error } = await supabaseClient
+          .from("products")
+          .update({sort_order: i + 1})
+          .eq("id", reorderedAll[i].id);
+
+        if(error){
+          alert("排序儲存失敗：" + error.message);
+          await loadProducts();
+          return;
+        }
+      }
+
+      await loadProducts();
+    }
+  });
+}
+  
 }
 function renderProducts(){
   const keyword = document.getElementById("search").value.trim().toLowerCase();
@@ -526,7 +597,7 @@ function renderProducts(){
 
   document.getElementById("products").innerHTML =
     filtered.length ? filtered.map(p=>`
-      <article class="card">
+      <article class="card" data-id="${p.id}">
         ${p.image_url
           ? `<img src="${escapeHTML(p.image_url)}" alt="${escapeHTML(p.name)}" loading="lazy">`
           : `<div style="height:210px;display:grid;place-items:center;color:#aaa;background:#fafafa">商品圖片</div>`
@@ -545,8 +616,7 @@ function renderProducts(){
   </button>
 ` : ""}
             ${isAdmin ? `
- <button onclick="moveProduct('${p.id}', -1)">↑</button>
-<button onclick="moveProduct('${p.id}', 1)">↓</button>
+<div class="drag-handle" title="按住拖曳排序">⠿ 拖曳排序</div>
 <button onclick="editProduct('${p.id}')">修改商品</button>
 <button onclick="deleteProduct('${p.id}')">刪除商品</button>
 ` : ""}
@@ -554,6 +624,8 @@ function renderProducts(){
       </article>
     `).join("")
     : `<div class="empty">目前沒有找到符合的商品</div>`;
+  
+    enableProductDrag();
 }
 
 function escapeHTML(value){
